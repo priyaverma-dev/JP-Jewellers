@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#9b2939">
+    <meta name="description" content="A clear, easy-to-use gold loan ledger and interest calculator.">
+    <title>JP Jewellers</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%23fffefa'/%3E%3Cpath d='M32 10 50 28 32 54 14 28 32 10Z' fill='none' stroke='%239b2939' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M14 28h36M23 19l9 35 9-35' fill='none' stroke='%239b2939' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            color-scheme: light;
+            --ink: #25251f;
+            --muted: #8a8981;
+            --line: #eae8e0;
+            --paper: #fffefa;
+            --canvas: #f5f3ee;
+            --gold: #b58b43;
+            --gold-dark: #785a25;
+            --gold-soft: #f4ead5;
+            --green: #486d56;
+            --green-soft: #e9f1e9;
+            --red: #a34d42;
+            --red-soft: #f8ebe8;
+            --shadow: 0 18px 60px rgba(52, 46, 32, .07);
+            font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-synthesis: none;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+        }
+        * { box-sizing: border-box; }
+        body { min-width: 320px; margin: 0; background: var(--canvas); color: var(--ink); }
+        button, input { font: inherit; }
+        button { cursor: pointer; }
+        .app-shell { width: min(1480px, 100%); min-height: 100vh; margin: 0 auto; padding: 26px 36px 48px; }
+        .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 34px; }
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .brand-mark { display: grid; width: 43px; height: 43px; place-items: center; border: 1px solid rgba(181,139,67,.24); border-radius: 15px; background: linear-gradient(145deg,#fffaf0,#efe2c9); color: var(--gold-dark); box-shadow: 0 5px 16px #8f71321c; }
+        .brand-mark svg { width: 23px; height: 23px; }
+        .brand-name { font: 800 18px/1.1 Manrope, sans-serif; letter-spacing: -.7px; }
+        .brand-caption { margin-top: 5px; color: var(--muted); font-size: 11px; letter-spacing: 1.1px; text-transform: uppercase; }
+        .topbar-right { display: flex; align-items: center; gap: 13px; color: var(--muted); font-size: 13px; }
+        .today-chip { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border: 1px solid #e9e6dd; border-radius: 30px; background: #ffffff9c; backdrop-filter: blur(16px); }
+        .today-chip svg { width: 15px; height: 15px; color: var(--gold-dark); }
+        .avatar { display: grid; width: 38px; height: 38px; place-items: center; border: 1px solid #e6dcc8; border-radius: 50%; background: #eee4d1; color: #71552c; font-weight: 700; }
+        .welcome { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 27px; }
+        .eyebrow { margin: 0 0 8px; color: var(--gold-dark); font-size: 11px; font-weight: 700; letter-spacing: 1.7px; text-transform: uppercase; }
+        h1, h2, p { margin-top: 0; }
+        h1 { margin-bottom: 8px; font: 700 clamp(27px, 3vw, 35px)/1.2 Manrope, sans-serif; letter-spacing: -1.5px; }
+        .welcome-copy { margin: 0; color: var(--muted); font-size: 14px; }
+        .primary-button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 9px; padding: 0 17px; border: 0; border-radius: 14px; background: #28281f; color: #fff; font-size: 13px; font-weight: 600; box-shadow: 0 7px 18px #28281f20; transition: transform .2s ease, box-shadow .2s ease, background .2s ease; }
+        .primary-button:hover { transform: translateY(-2px); background: #3b3a30; box-shadow: 0 10px 24px #28281f2b; }
+        .primary-button svg, .secondary-button svg { width: 17px; height: 17px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 15px; margin-bottom: 23px; }
+        .stat-card { position: relative; overflow: hidden; min-height: 127px; padding: 21px 22px; border: 1px solid #eeece5; border-radius: 21px; background: #fffefa; box-shadow: 0 4px 18px #36332105; transition: transform .22s ease, box-shadow .22s ease; }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+        .stat-top { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 12px; }
+        .stat-icon { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 12px; background: #f5f0e6; color: var(--gold-dark); }
+        .stat-icon svg { width: 17px; height: 17px; }
+        .stat-card:nth-child(2) .stat-icon { background: var(--green-soft); color: var(--green); }
+        .stat-card:nth-child(3) .stat-icon { background: #f1eddf; }
+        .stat-card:nth-child(4) .stat-icon { background: #f0eee8; color: #716f66; }
+        .stat-value { margin: 15px 0 0; font: 700 25px/1.1 Manrope, sans-serif; letter-spacing: -.8px; }
+        .stat-note { margin: 5px 0 0; color: #99978f; font-size: 11px; }
+        .content-grid { display: grid; grid-template-columns: minmax(330px, .88fr) minmax(0, 1.55fr); align-items: start; gap: 20px; }
+        .panel { border: 1px solid #eeece5; border-radius: 22px; background: var(--paper); box-shadow: 0 4px 20px #36332106; }
+        .form-panel { position: sticky; top: 16px; overflow: hidden; }
+        .panel-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; padding: 23px 23px 18px; border-bottom: 1px solid #f0eee8; }
+        .panel-heading h2 { margin: 0 0 5px; font: 700 16px/1.3 Manrope, sans-serif; letter-spacing: -.35px; }
+        .panel-subtitle { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+        .step-badge { flex: none; padding: 7px 10px; border: 1px solid #f0e8d8; border-radius: 10px; background: #faf5eb; color: var(--gold-dark); font-size: 10px; font-weight: 700; letter-spacing: .5px; }
+        .loan-form { padding: 19px 23px 22px; }
+        .form-section-label { display: flex; align-items: center; gap: 8px; margin: 1px 0 13px; color: #68665e; font-size: 11px; font-weight: 700; letter-spacing: .65px; text-transform: uppercase; }
+        .form-section-label svg { width: 15px; height: 15px; color: var(--gold); }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px 12px; }
+        .field { min-width: 0; }
+        .field.full { grid-column: 1 / -1; }
+        .field label { display: block; margin-bottom: 7px; color: #65635b; font-size: 11px; font-weight: 600; }
+        .field input { width: 100%; height: 42px; padding: 0 11px; border: 1px solid #e9e7df; border-radius: 11px; outline: none; background: #fff; color: var(--ink); font-size: 12px; transition: border-color .18s ease, box-shadow .18s ease, background .18s ease; }
+        .field input::placeholder { color: #b4b2aa; }
+        .field input:focus { border-color: #c7a566; background: #fffefa; box-shadow: 0 0 0 3px #b58b431c; }
+        .input-wrap { position: relative; }
+        .input-wrap input { padding-left: 28px; }
+        .input-prefix { position: absolute; top: 50%; left: 11px; color: #8c897f; font-size: 12px; transform: translateY(-50%); pointer-events: none; }
+        .field-hint { margin: 6px 0 0; color: #a09e96; font-size: 10px; line-height: 1.45; }
+        .section-rule { height: 1px; margin: 19px 0 17px; background: #f0eee8; }
+        .repayment-box { margin-top: 17px; padding: 15px; border: 1px solid #efe5d3; border-radius: 15px; background: linear-gradient(140deg,#fbf7ef,#f8f3e9); }
+        .repayment-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+        .repayment-title { display: flex; align-items: center; gap: 8px; color: #67512e; font-size: 11px; font-weight: 700; }
+        .repayment-title svg { width: 15px; height: 15px; }
+        .repayment-total { color: #5d4723; font: 700 20px/1.2 Manrope, sans-serif; letter-spacing: -.5px; }
+        .repayment-details { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding-top: 11px; border-top: 1px solid #eadfca; }
+        .repayment-detail { display: flex; justify-content: space-between; gap: 8px; color: #777165; font-size: 10px; }
+        .repayment-detail strong { color: #464239; font-weight: 600; }
+        .calculation-note { margin: 10px 0 0; color: #8c8578; font-size: 9px; line-height: 1.5; }
+        .form-error { display: none; margin-top: 12px; padding: 10px 12px; border: 1px solid #f0d1cc; border-radius: 11px; background: var(--red-soft); color: var(--red); font-size: 11px; line-height: 1.5; }
+        .form-error.visible { display: block; }
+        .submit-button { width: 100%; margin-top: 16px; }
+        .ledger-panel { min-width: 0; overflow: hidden; }
+        .ledger-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 21px 22px 17px; }
+        .ledger-heading h2 { margin: 0 0 4px; font: 700 16px/1.3 Manrope, sans-serif; letter-spacing: -.35px; }
+        .ledger-heading p { margin: 0; color: var(--muted); font-size: 11px; }
+        .search-box { position: relative; width: min(230px, 43%); }
+        .search-box svg { position: absolute; top: 50%; left: 11px; width: 15px; height: 15px; color: #a09e96; transform: translateY(-50%); pointer-events: none; }
+        .search-box input { width: 100%; height: 38px; padding: 0 10px 0 33px; border: 1px solid #ebe9e2; border-radius: 12px; outline: none; background: #fff; color: var(--ink); font-size: 11px; }
+        .search-box input:focus { border-color: #c7a566; box-shadow: 0 0 0 3px #b58b4315; }
+        .ledger-controls { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 22px 15px; }
+        .filter-tabs { display: flex; gap: 4px; padding: 4px; border: 1px solid #efede7; border-radius: 12px; background: #f7f6f2; }
+        .filter-tab { padding: 7px 12px; border: 0; border-radius: 9px; background: transparent; color: #828078; font-size: 10px; font-weight: 600; transition: background .18s ease, color .18s ease, box-shadow .18s ease; }
+        .filter-tab:hover { color: var(--ink); }
+        .filter-tab.active { background: #fff; color: #35342d; box-shadow: 0 2px 7px #26251b12; }
+        .record-count { color: #9b9990; font-size: 10px; white-space: nowrap; }
+        .table-wrap { overflow-x: auto; border-top: 1px solid #f0eee8; }
+        .loan-table { width: 100%; border-collapse: collapse; text-align: left; }
+        .loan-table th { padding: 12px 13px; background: #fcfbf8; color: #99978e; font-size: 9px; font-weight: 600; letter-spacing: .45px; text-transform: uppercase; white-space: nowrap; }
+        .loan-table th:first-child, .loan-table td:first-child { padding-left: 22px; }
+        .loan-table th:last-child, .loan-table td:last-child { padding-right: 20px; }
+        .loan-table td { padding: 13px; border-top: 1px solid #f3f1ec; color: #77756d; font-size: 10px; white-space: nowrap; }
+        .loan-table tbody tr { transition: background .16s ease; }
+        .loan-table tbody tr:hover { background: #fdfbf6; }
+        .customer-cell { display: flex; min-width: 124px; align-items: center; gap: 9px; }
+        .customer-avatar { display: grid; width: 31px; height: 31px; flex: none; place-items: center; border-radius: 11px; background: #f1eadc; color: #806438; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+        .customer-name { display: block; max-width: 120px; overflow: hidden; color: #38372f; font-size: 10px; font-weight: 600; text-overflow: ellipsis; }
+        .customer-phone { display: block; margin-top: 3px; color: #a09e96; font-size: 9px; }
+        .loan-id { color: #a09e96; font-size: 9px; }
+        .table-amount { color: #414037; font-weight: 600; }
+        .weight-cell { color: #58564f; font-weight: 500; }
+        .status-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 8px; border-radius: 20px; font-size: 9px; font-weight: 600; }
+        .status-pill::before { width: 5px; height: 5px; border-radius: 50%; background: currentColor; content: ""; }
+        .status-active { background: var(--green-soft); color: var(--green); }
+        .status-redeemed { background: #f1f0ed; color: #77756d; }
+        .row-actions { display: flex; align-items: center; gap: 6px; }
+        .action-button { display: inline-flex; min-height: 29px; align-items: center; justify-content: center; gap: 5px; padding: 0 8px; border: 1px solid #e9e7df; border-radius: 9px; background: #fff; color: #6f6d64; font-size: 9px; font-weight: 600; transition: border-color .18s ease, background .18s ease, transform .18s ease; }
+        .action-button:hover { transform: translateY(-1px); border-color: #c7a566; background: #fffaf0; color: var(--gold-dark); }
+        .action-button svg { width: 12px; height: 12px; }
+        .empty-state { padding: 48px 20px 50px; text-align: center; }
+        .empty-icon { display: grid; width: 49px; height: 49px; margin: 0 auto 13px; place-items: center; border: 1px solid #eee7d8; border-radius: 17px; background: #faf5eb; color: var(--gold-dark); }
+        .empty-icon svg { width: 23px; height: 23px; }
+        .empty-state h3 { margin: 0 0 5px; font: 700 13px Manrope, sans-serif; }
+        .empty-state p { max-width: 255px; margin: 0 auto; color: var(--muted); font-size: 11px; line-height: 1.6; }
+        .privacy-note { display: flex; align-items: center; gap: 7px; margin: 12px 2px 0; color: #99978e; font-size: 10px; line-height: 1.5; }
+        .privacy-note svg { width: 13px; height: 13px; flex: none; color: #89877d; }
+        .toast { position: fixed; z-index: 10; right: 24px; bottom: 24px; max-width: min(380px, calc(100vw - 32px)); padding: 13px 16px; border: 1px solid #e7e3d8; border-radius: 14px; background: #fffefa; color: #3e3d35; box-shadow: 0 12px 38px #28251b20; font-size: 12px; line-height: 1.5; opacity: 0; pointer-events: none; transform: translateY(10px); transition: opacity .22s ease, transform .22s ease; }
+        .toast.visible { opacity: 1; transform: translateY(0); }
+        .toast.error { border-color: #f0d1cc; background: #fff9f8; color: var(--red); }
+        .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
+        @media (max-width: 1080px) {
+            .app-shell { padding-right: 24px; padding-left: 24px; }
+            .content-grid { grid-template-columns: minmax(300px, .9fr) minmax(0, 1.3fr); gap: 15px; }
+            .loan-form, .panel-heading { padding-right: 18px; padding-left: 18px; }
+            .ledger-heading { padding-right: 18px; padding-left: 18px; }
+            .ledger-controls { padding-right: 18px; padding-left: 18px; }
+            .loan-table th, .loan-table td { padding-right: 9px; padding-left: 9px; }
+            .loan-table th:first-child, .loan-table td:first-child { padding-left: 17px; }
+            .loan-table th:last-child, .loan-table td:last-child { padding-right: 15px; }
+        }
+        @media (max-width: 780px) {
+            .app-shell { padding: 20px 18px 35px; }
+            .topbar { margin-bottom: 27px; }
+            .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; }
+            .stat-card { min-height: 115px; padding: 17px; border-radius: 18px; }
+            .stat-value { font-size: 23px; }
+            .content-grid { grid-template-columns: 1fr; }
+            .form-panel { position: static; }
+            .loan-form { padding: 19px 22px 22px; }
+            .panel-heading { padding-right: 22px; padding-left: 22px; }
+            .ledger-heading, .ledger-controls { padding-right: 20px; padding-left: 20px; }
+            .table-wrap { overflow: visible; }
+            .loan-table, .loan-table tbody, .loan-table tr, .loan-table td { display: block; width: 100%; }
+            .loan-table thead { display: none; }
+            .loan-table tbody { display: grid; gap: 0; }
+            .loan-table tr { position: relative; padding: 13px 16px 14px; border-top: 1px solid #f0eee8; }
+            .loan-table td { display: flex; min-height: 0; align-items: center; justify-content: space-between; gap: 14px; padding: 6px 0; border: 0; font-size: 10px; white-space: normal; }
+            .loan-table td:first-child, .loan-table td:last-child { padding-right: 0; padding-left: 0; }
+            .loan-table td[data-label]::before { flex: none; color: #99978e; content: attr(data-label); font-size: 9px; }
+            .loan-table td:first-child::before, .loan-table td:last-child::before { display: none; }
+            .customer-cell { justify-content: flex-end; }
+            .row-actions { justify-content: flex-end; }
+            .customer-name { max-width: 185px; }
+            .customer-phone { text-align: right; }
+        }
+        @media (max-width: 480px) {
+            .app-shell { padding: 16px 13px 28px; }
+            .topbar { margin-bottom: 24px; }
+            .brand-mark { width: 39px; height: 39px; border-radius: 13px; }
+            .brand-name { font-size: 16px; }
+            .brand-caption { font-size: 9px; }
+            .topbar-right { gap: 8px; font-size: 11px; }
+            .today-chip { gap: 6px; padding: 8px 10px; }
+            .avatar { width: 34px; height: 34px; }
+            .welcome { align-items: flex-start; flex-direction: column; gap: 15px; margin-bottom: 19px; }
+            .welcome .primary-button { min-height: 40px; }
+            h1 { font-size: 28px; }
+            .welcome-copy { font-size: 12px; }
+            .stats-grid { gap: 9px; margin-bottom: 15px; }
+            .stat-card { min-height: 108px; padding: 14px; border-radius: 16px; }
+            .stat-top { font-size: 10px; }
+            .stat-icon { width: 30px; height: 30px; }
+            .stat-value { margin-top: 13px; font-size: 21px; }
+            .stat-note { font-size: 9px; }
+            .panel { border-radius: 19px; }
+            .panel-heading { padding: 19px 16px 15px; }
+            .loan-form { padding: 17px 16px 18px; }
+            .ledger-heading { align-items: flex-start; flex-direction: column; gap: 13px; padding: 18px 16px 14px; }
+            .search-box { width: 100%; }
+            .ledger-controls { align-items: flex-start; flex-direction: column; padding: 0 16px 13px; }
+            .filter-tabs { width: 100%; }
+            .filter-tab { flex: 1; padding-right: 5px; padding-left: 5px; }
+            .record-count { align-self: flex-end; }
+            .repayment-box { padding: 13px; }
+            .repayment-total { font-size: 18px; }
+            .repayment-details { grid-template-columns: 1fr; gap: 8px; }
+            .toast { right: 13px; bottom: 13px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+        }
+        :root {
+            --ink: #20233d;
+            --muted: #70738c;
+            --line: #e5e4f4;
+            --paper: #fff;
+            --canvas: #f2f1fb;
+            --gold: #e49a24;
+            --gold-dark: #8c5100;
+            --gold-soft: #fff0d4;
+            --green: #18794e;
+            --green-soft: #dff5e9;
+            --red: #b3261e;
+            --red-soft: #ffebe8;
+            --shadow: 0 18px 48px rgba(54, 48, 105, .12);
+        }
+        body { min-width: 0; overflow-x: hidden; background: radial-gradient(ellipse at 5% 0%, #e7e4ff 0, transparent 34%), radial-gradient(ellipse at 100% 20%, #ffe9df 0, transparent 27%), var(--canvas); color: var(--ink); }
+        .brand-mark { border: 1px solid #d5cdfc; background: linear-gradient(145deg,#f0edff,#dcd5ff); color: #5740bd; box-shadow: 0 5px 16px #5740bd20; }
+        .brand-caption { color: #777696; }
+        .today-chip { border-color: #e1def4; background: #ffffffc9; }
+        .today-chip svg { color: #6553c7; }
+        .avatar { border-color: #d6cff8; background: #e8e3ff; color: #5140ac; }
+        .eyebrow { color: #6553c7; }
+        .primary-button { background: linear-gradient(115deg,#6553c7,#7b61db); box-shadow: 0 7px 18px #6553c733; }
+        .primary-button:hover { background: linear-gradient(115deg,#5542b7,#694ecb); box-shadow: 0 10px 24px #6553c744; }
+        .stats-grid .stat-card { border-color: transparent; }
+        .stats-grid .stat-card:nth-child(1) { background: linear-gradient(140deg,#fff,#eeebff); }
+        .stats-grid .stat-card:nth-child(2) { background: linear-gradient(140deg,#fff,#e4f7ec); }
+        .stats-grid .stat-card:nth-child(3) { background: linear-gradient(140deg,#fff,#fff1d9); }
+        .stats-grid .stat-card:nth-child(4) { background: linear-gradient(140deg,#fff,#ffe9e5); }
+        .stat-card:nth-child(1) .stat-icon { background: #ded8ff; color: #5140b5; }
+        .stat-card:nth-child(2) .stat-icon { background: #d2f0dd; color: #18794e; }
+        .stat-card:nth-child(3) .stat-icon { background: #ffe4b5; color: #985b00; }
+        .stat-card:nth-child(4) .stat-icon { background: #ffd8d2; color: #b3261e; }
+        .stat-note { color: #77758d; }
+        .panel { border-color: #e6e4f2; box-shadow: 0 8px 30px #3831760c; }
+        .form-panel { background: linear-gradient(180deg,#fff 0%,#fbfaff 100%); }
+        .panel-heading { border-bottom-color: #eeecf8; background: linear-gradient(100deg,#faf9ff,#fff); }
+        .step-badge { border-color: #ded8ff; background: #efedff; color: #5845ba; }
+        .form-section-label { color: #555773; }
+        .form-section-label svg { color: #715ed0; }
+        .field input { border-color: #e3e2ee; background: #fff; }
+        .field input:focus { border-color: #7864d4; background: #fff; box-shadow: 0 0 0 3px #7864d426; }
+        .section-rule { background: #eeecf6; }
+        .repayment-box { border-color: #f4d79e; background: linear-gradient(140deg,#fff8e9,#fff0d4); }
+        .repayment-title { color: #865000; }
+        .repayment-details { border-top-color: #efd9b1; }
+        .repayment-total { color: #694000; }
+        .filter-tabs { border-color: #e8e6f1; background: #f1f0f8; }
+        .filter-tab.active { background: #ded9ff; color: #4938a7; box-shadow: 0 2px 7px #5343b51c; }
+        .search-box input { border-color: #e3e2ee; }
+        .search-box input:focus { border-color: #7864d4; box-shadow: 0 0 0 3px #7864d426; }
+        .table-wrap { border-top-color: #eeecf6; }
+        .loan-table th { background: #f6f5fc; color: #74728b; }
+        .loan-table td { border-top-color: #f0eef7; }
+        .loan-table tbody tr:hover { background: #f9f8ff; }
+        .customer-avatar { background: #e8e3ff; color: #5140ac; }
+        .customer-name, .table-amount { color: #292b46; }
+        .customer-phone, .loan-id { color: #77758d; }
+        .status-redeemed { background: #efedff; color: #5845ba; }
+        .action-button { border-color: #e3e1f0; color: #585a75; }
+        .action-button:hover { border-color: #9e90e9; background: #f4f1ff; color: #5140ac; }
+        .empty-icon { border-color: #ded8ff; background: #efedff; color: #5845ba; }
+        .privacy-note { color: #79778e; }
+        .enquiry-section { margin-top: 20px; overflow: hidden; }
+        .enquiry-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 22px 23px; background: linear-gradient(100deg,#eeebff,#fff 68%,#e7f7ee); }
+        .enquiry-heading h2 { margin: 0 0 5px; font: 700 17px/1.3 Manrope, sans-serif; letter-spacing: -.4px; }
+        .enquiry-heading p { margin: 0; color: var(--muted); font-size: 12px; }
+        .enquiry-total { padding: 8px 12px; border: 1px solid #dcd6ff; border-radius: 12px; background: #fff; color: #5642b7; font-size: 11px; font-weight: 700; white-space: nowrap; }
+        .enquiry-form-wrap { padding: 20px 22px; border-top: 1px solid #eeecf6; background: #fbfaff; }
+        .enquiry-form { display: grid; grid-template-columns: 1.1fr 1fr .9fr 1fr 1.4fr auto; align-items: end; gap: 12px; }
+        .enquiry-form .field input { height: 41px; }
+        .enquiry-form .primary-button { min-height: 41px; padding: 0 15px; white-space: nowrap; }
+        .enquiry-form input[type="date"] { min-width: 0; }
+        .enquiry-error { margin-top: 11px; }
+        .enquiry-board { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 13px; overflow-x: auto; padding: 19px 22px 22px; }
+        .enquiry-lane { min-width: 0; }
+        .enquiry-lane { min-width: 0; min-height: 176px; overflow: hidden; border: 1px solid #e8e6f3; border-radius: 16px; background: #f9f8fe; }
+        .enquiry-lane:nth-child(1) { background: #f6f3ff; }
+        .enquiry-lane:nth-child(2) { background: #eef6ff; }
+        .enquiry-lane:nth-child(3) { background: #fff7e9; }
+        .enquiry-lane:nth-child(4) { background: #edf8f1; }
+        .lane-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 13px 13px 11px; border-bottom: 1px solid #e9e7f2; color: #42445f; font-size: 11px; font-weight: 700; }
+        .lane-count { display: grid; min-width: 22px; height: 22px; place-items: center; padding: 0 5px; border-radius: 8px; background: #e1dcff; color: #5140ac; font-size: 10px; }
+        .enquiry-lane:nth-child(2) .lane-count { background: #d8eaff; color: #245b98; }
+        .enquiry-lane:nth-child(3) .lane-count { background: #ffe8bd; color: #865000; }
+        .enquiry-lane:nth-child(4) .lane-count { background: #d6f0df; color: #18794e; }
+        .enquiry-list { display: grid; gap: 9px; padding: 10px; }
+        .enquiry-card { padding: 12px; border: 1px solid #e9e7f2; border-radius: 13px; background: #fff; box-shadow: 0 3px 10px #33305d08; transition: transform .18s ease, box-shadow .18s ease; }
+        .enquiry-card:hover { transform: translateY(-2px); box-shadow: 0 7px 18px #33305d12; }
+        .enquiry-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 7px; }
+        .enquiry-customer { color: #292b46; font-size: 11px; font-weight: 700; overflow-wrap: anywhere; }
+        .enquiry-phone { margin-top: 4px; color: #73728a; font-size: 10px; }
+        .enquiry-amount { margin: 10px 0 7px; color: #5845ba; font-size: 11px; font-weight: 700; }
+        .enquiry-note { margin: 0 0 10px; color: #707087; font-size: 10px; line-height: 1.5; overflow-wrap: anywhere; }
+        .enquiry-followup { display: flex; align-items: center; gap: 5px; margin: 0 0 10px; color: #776036; font-size: 9px; }
+        .enquiry-followup svg { width: 13px; height: 13px; }
+        .enquiry-card-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 9px; border-top: 1px solid #f0eef6; }
+        .enquiry-stage { width: min(128px,72%); height: 30px; padding: 0 7px; border: 1px solid #e4e2f0; border-radius: 9px; background: #fbfaff; color: #4b4d67; font: 600 10px "DM Sans",sans-serif; }
+        .enquiry-delete { display: grid; width: 30px; height: 30px; place-items: center; border: 1px solid #f0dcdb; border-radius: 9px; background: #fff7f6; color: #a34d42; }
+        .enquiry-delete:hover { background: #ffe8e5; }
+        .enquiry-delete svg { width: 14px; height: 14px; }
+        .lane-empty { margin: 0; padding: 13px 8px; color: #85839b; font-size: 10px; text-align: center; }
+        .business-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 18px; padding: 15px 19px; border: 1px solid #e4e1f3; border-radius: 17px; background: #ffffffc9; color: #646680; font-size: 11px; }
+        .business-footer strong { color: #343650; font-weight: 700; }
+        .business-footer-address, .business-footer-phone, .business-footer-whatsapp { display: flex; align-items: center; gap: 8px; }
+        .business-footer-address > span { display: grid; gap: 5px; }
+        .business-footer svg { width: 16px; height: 16px; flex: none; color: #6553c7; }
+        .business-footer a { color: #5845ba; font-weight: 700; text-decoration: none; }
+        .business-footer a:hover { text-decoration: underline; }
+        .business-footer .business-map-link { width: fit-content; font-size: 10px; font-weight: 600; }
+        .business-footer .business-whatsapp-link { color: #18794e; }
+        @media (max-width: 1080px) {
+            .enquiry-form { grid-template-columns: repeat(3,minmax(0,1fr)); }
+            .enquiry-form .field:nth-child(5) { grid-column: span 2; }
+        }
+        @media (max-width: 780px) {
+            .enquiry-heading { padding: 19px 20px; }
+            .enquiry-form-wrap { padding: 18px 20px; }
+            .enquiry-form { grid-template-columns: repeat(2,minmax(0,1fr)); }
+            .enquiry-form .field:nth-child(5) { grid-column: 1 / -1; }
+            .enquiry-board { grid-template-columns: repeat(4,minmax(225px,1fr)); padding: 16px 20px 20px; }
+        }
+        @media (max-width: 480px) {
+            .enquiry-heading { align-items: flex-start; flex-direction: column; gap: 12px; padding: 17px 16px; }
+            .enquiry-form-wrap { padding: 16px; }
+            .enquiry-form { grid-template-columns: 1fr; }
+            .enquiry-form .field:nth-child(5) { grid-column: auto; }
+            .enquiry-board { padding: 14px 16px 17px; }
+            .business-footer { align-items: flex-start; flex-direction: column; gap: 11px; padding: 14px; }
+        }
+        :root {
+            --ink: #302921;
+            --muted: #7c756b;
+            --line: #e8e1d7;
+            --paper: #fffefa;
+            --canvas: #f7f5f0;
+            --gold: #b58b43;
+            --gold-dark: #765622;
+            --gold-soft: #f5ecd9;
+            --green: #486d56;
+            --green-soft: #e9f1e9;
+            --red: #9b2939;
+            --red-soft: #f8ebe8;
+            --shadow: 0 18px 48px rgba(67, 48, 36, .09);
+        }
+        body { background: var(--canvas); color: var(--ink); }
+        .brand-mark { border-color: #ead9b7; background: linear-gradient(145deg,#fffaf0,#f2e5cb); color: var(--gold-dark); box-shadow: 0 5px 16px #73541e14; }
+        .brand-caption { color: var(--muted); }
+        .today-chip { border-color: var(--line); background: #fffefa; }
+        .today-chip svg, .business-footer svg { color: var(--gold-dark); }
+        .avatar { border-color: #ead9b7; background: #f5ecd9; color: var(--gold-dark); }
+        .eyebrow { color: var(--red); }
+        .primary-button { background: var(--red); box-shadow: 0 7px 18px #9b293928; }
+        .primary-button:hover { background: #812131; box-shadow: 0 10px 24px #9b293938; }
+        .stats-grid .stat-card,
+        .stats-grid .stat-card:nth-child(1),
+        .stats-grid .stat-card:nth-child(2),
+        .stats-grid .stat-card:nth-child(3),
+        .stats-grid .stat-card:nth-child(4) { border: 1px solid var(--line); background: var(--paper); }
+        .stat-card:nth-child(1) .stat-icon,
+        .stat-card:nth-child(2) .stat-icon,
+        .stat-card:nth-child(3) .stat-icon,
+        .stat-card:nth-child(4) .stat-icon { background: var(--gold-soft); color: var(--gold-dark); }
+        .stat-note { color: var(--muted); }
+        .panel { border-color: var(--line); box-shadow: 0 8px 30px #4330240b; }
+        .form-panel { background: var(--paper); }
+        .panel-heading { border-bottom-color: var(--line); background: #fffefa; }
+        .step-badge { border-color: #eadfc9; background: #f8f2e7; color: var(--gold-dark); }
+        .form-section-label { color: #5d5449; }
+        .form-section-label svg { color: var(--gold-dark); }
+        .field input, .search-box input { border-color: var(--line); background: #fff; }
+        .field input:focus, .search-box input:focus { border-color: var(--red); background: #fff; box-shadow: 0 0 0 3px #9b29391a; }
+        .section-rule, .table-wrap { border-color: var(--line); }
+        .section-rule { background: var(--line); }
+        .repayment-box { border-color: #ead9b7; background: #faf5e9; }
+        .repayment-title, .repayment-total { color: var(--gold-dark); }
+        .repayment-details { border-top-color: #eadfc9; }
+        .filter-tabs { border-color: var(--line); background: #f4f1eb; }
+        .filter-tab.active { background: #f3e9d6; color: var(--gold-dark); box-shadow: 0 2px 7px #73541e16; }
+        .loan-table th { background: #f8f6f1; color: var(--muted); }
+        .loan-table td { border-top-color: #f0ece5; }
+        .loan-table tbody tr:hover { background: #fbf9f5; }
+        .customer-avatar { background: #f5ecd9; color: var(--gold-dark); }
+        .customer-name, .table-amount { color: var(--ink); }
+        .customer-phone, .loan-id { color: var(--muted); }
+        .status-redeemed { background: #f3efe6; color: #716653; }
+        .action-button { border-color: var(--line); color: #5d5449; }
+        .action-button:hover { border-color: #d9c398; background: #faf5e9; color: var(--gold-dark); }
+        .empty-icon { border-color: #eadfc9; background: #f8f2e7; color: var(--gold-dark); }
+        .privacy-note { color: var(--muted); }
+        .enquiry-heading { background: #faf7ef; }
+        .enquiry-heading p, .enquiry-form-wrap { color: var(--muted); }
+        .enquiry-form-wrap { border-top-color: var(--line); background: #fffefa; }
+        .enquiry-total { border-color: #eadfc9; background: #f8f2e7; color: var(--gold-dark); }
+        .enquiry-board { background: #fffefa; }
+        .enquiry-lane,
+        .enquiry-lane:nth-child(1),
+        .enquiry-lane:nth-child(2),
+        .enquiry-lane:nth-child(3),
+        .enquiry-lane:nth-child(4) { border-color: var(--line); background: #f8f6f1; }
+        .lane-heading { border-bottom-color: var(--line); color: #51483e; }
+        .lane-count,
+        .enquiry-lane:nth-child(2) .lane-count,
+        .enquiry-lane:nth-child(3) .lane-count,
+        .enquiry-lane:nth-child(4) .lane-count { background: #efe5d1; color: var(--gold-dark); }
+        .enquiry-card { border-color: var(--line); background: var(--paper); box-shadow: 0 3px 10px #43302408; }
+        .enquiry-customer { color: var(--ink); }
+        .enquiry-phone, .enquiry-note, .lane-empty { color: var(--muted); }
+        .enquiry-amount { color: var(--red); }
+        .enquiry-followup { color: var(--gold-dark); }
+        .enquiry-card-actions { border-top-color: #f0ece5; }
+        .enquiry-stage { border-color: var(--line); background: #fffefa; color: #51483e; }
+        .enquiry-delete { border-color: #ecd9d5; background: #fff9f8; }
+        .enquiry-delete:hover { background: var(--red-soft); }
+        .business-footer { border-color: var(--line); background: #fffefa; color: var(--muted); }
+        .business-footer strong { color: var(--ink); }
+        .business-footer a { color: var(--red); }
+        .business-footer .business-whatsapp-link { color: #486d56; }
+        .brand-mark { border-color: #e8cbd0; background: linear-gradient(145deg,#fffafa,#f8e9ec); color: var(--red); box-shadow: 0 5px 16px #9b29391a; }
+        .today-chip svg,
+        .stat-icon,
+        .form-section-label svg,
+        .repayment-title svg,
+        .empty-icon,
+        .business-footer svg,
+        .enquiry-followup svg { color: var(--red); }
+        .stat-card:nth-child(1) .stat-icon,
+        .stat-card:nth-child(2) .stat-icon,
+        .stat-card:nth-child(3) .stat-icon,
+        .stat-card:nth-child(4) .stat-icon { border: 1px solid #f0dce0; background: #f9edef; color: var(--red); }
+        .avatar, .customer-avatar { border-color: #f0dce0; background: #f9edef; color: var(--red); }
+        .step-badge { border-color: #e8cbd0; background: #f9edef; color: var(--red); }
+        .repayment-box { border-color: #e8cbd0; background: linear-gradient(140deg,#fffafa,#f9edef); }
+        .repayment-details { border-top-color: #edd9dc; }
+        .repayment-title, .repayment-total { color: var(--red); }
+        .filter-tabs { border-color: var(--line); background: #f4f1eb; }
+        .filter-tab.active { background: var(--red); color: #fff; box-shadow: 0 2px 7px #9b293926; }
+        .filter-tab:hover:not(.active) { background: #f9edef; color: var(--red); }
+        .enquiry-total,
+        .lane-count,
+        .enquiry-lane:nth-child(2) .lane-count,
+        .enquiry-lane:nth-child(3) .lane-count,
+        .enquiry-lane:nth-child(4) .lane-count { border-color: #e8cbd0; background: #f9edef; color: var(--red); }
+        .action-button:hover { border-color: #e8cbd0; background: #f9edef; color: var(--red); }
+        .enquiry-followup { color: var(--red); }
+        .form-section-label svg { color: var(--red); }
+        .repayment-title, .repayment-total, .enquiry-followup { color: var(--red); }
+        .empty-icon { border-color: #f0dce0; background: #f9edef; }
+    </style>
+</head>
+<body>
+    <main class="app-shell">
+        <header class="topbar">
+            <a class="brand" href="#" aria-label="JP Jewellers home" style="color: inherit; text-decoration: none;">
+                <span class="brand-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="m12 3 7.2 7.2L12 21l-7.2-10.8L12 3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="m4.8 10.2 14.4 0M8.4 6.6l3.6 14.4 3.6-14.4" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+                </span>
+                <span><span class="brand-name">JP Jewellers</span><span class="brand-caption" style="display:block">Gold &amp; finance</span></span>
+            </a>
+            <div class="topbar-right">
+                <span class="today-chip"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3" stroke="currentColor" stroke-width="1.5"/><path d="M7.5 3.5v3M16.5 3.5v3M3.5 9.5h17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span id="today-label"></span></span>
+                <span class="avatar" aria-label="Business account">A</span>
+            </div>
+        </header>
+
+        <section class="welcome" aria-labelledby="welcome-title">
+            <div>
+                <p class="eyebrow">Your business, at a glance</p>
+                <h1 id="welcome-title">Good day. Let’s make it count.</h1>
+                <p class="welcome-copy">Every loan, every gram, every detail — all in one calm place.</p>
+            </div>
+            <button class="primary-button" id="new-loan-button" type="button">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                New loan
+            </button>
+        </section>
+
+        <section class="stats-grid" aria-label="Loan portfolio summary">
+            <article class="stat-card">
+                <div class="stat-top"><span>Active loans</span><span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 7.5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.5"/><path d="M3 10.5h18M7 15.5h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span></div>
+                <p class="stat-value" id="stat-active">0</p><p class="stat-note">Currently with customers</p>
+            </article>
+            <article class="stat-card">
+                <div class="stat-top"><span>Amount lent</span><span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3.5v17M16.5 7.5c-.6-1.3-2.1-2-4.4-2-2.5 0-4.1 1.2-4.1 3s1.5 2.7 4.3 3.3c2.9.6 4.3 1.5 4.3 3.4 0 2-1.7 3.4-4.4 3.4-2.5 0-4.3-.9-5-2.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span></div>
+                <p class="stat-value" id="stat-lent">₹0</p><p class="stat-note">Across active loans</p>
+            </article>
+            <article class="stat-card">
+                <div class="stat-top"><span>Gold pledged</span><span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m12 3 8 7-8 11-8-11 8-7Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 10h16M8 6l4 15 4-15" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg></span></div>
+                <p class="stat-value" id="stat-gold">0 g</p><p class="stat-note">Held against active loans</p>
+            </article>
+            <article class="stat-card">
+                <div class="stat-top"><span>Redeemed</span><span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5 9.5 17 19 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/></svg></span></div>
+                <p class="stat-value" id="stat-redeemed">0</p><p class="stat-note">Loans released to customers</p>
+            </article>
+        </section>
+
+        <section class="content-grid" aria-label="Loan management">
+            <div>
+                <article class="panel form-panel" id="loan-form-panel">
+                    <div class="panel-heading">
+                        <div><h2>Start a new loan</h2><p class="panel-subtitle">A few details to get things moving.</p></div>
+                        <span class="step-badge">NEW ENTRY</span>
+                    </div>
+                    <form class="loan-form" id="loan-form" novalidate>
+                        <p class="form-section-label"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.5"/><path d="M4.5 20c.6-3.7 3.2-5.5 7.5-5.5s6.9 1.8 7.5 5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Customer details</p>
+                        <div class="form-grid">
+                            <div class="field full"><label for="customer-name">Customer name</label><input id="customer-name" name="name" type="text" placeholder="Full name" autocomplete="name" maxlength="80" required></div>
+                            <div class="field full"><label for="customer-phone">Phone number</label><input id="customer-phone" name="phone" type="tel" placeholder="e.g. +91 98765 43210" autocomplete="tel" maxlength="24" required></div>
+                        </div>
+                        <div class="section-rule"></div>
+                        <p class="form-section-label"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m12 3 8 7-8 11-8-11 8-7Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 10h16" stroke="currentColor" stroke-width="1.2"/></svg>Loan &amp; gold details</p>
+                        <div class="form-grid">
+                            <div class="field"><label for="loan-amount">Loan amount</label><div class="input-wrap"><span class="input-prefix">₹</span><input id="loan-amount" name="amount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="50,000" required></div></div>
+                            <div class="field"><label for="gold-weight">Gold weight</label><div class="input-wrap"><input id="gold-weight" name="weight" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="10.00" style="padding-right:27px" required><span class="input-prefix" style="right:10px;left:auto">g</span></div></div>
+                            <div class="field"><label for="start-date">Start date</label><input id="start-date" name="startDate" type="date" required></div>
+                            <div class="field"><label for="retention-months">Retention period</label><div class="input-wrap"><input id="retention-months" name="retentionMonths" type="number" inputmode="numeric" min="1" max="240" step="1" value="6" required><span class="input-prefix" style="right:10px;left:auto">mo</span></div></div>
+                            <div class="field full"><label for="interest-rate">Interest rate (per year)</label><div class="input-wrap"><input id="interest-rate" name="interestRate" type="number" inputmode="decimal" min="0" max="1000" step="0.01" value="12" required><span class="input-prefix" style="right:10px;left:auto">%</span></div><p class="field-hint">Simple interest, calculated by the actual number of days.</p></div>
+                            <div class="field full"><label for="redemption-date">Calculate payoff for</label><input id="redemption-date" name="redemptionDate" type="date" required><p class="field-hint" id="maturity-hint">Retention period ends —</p></div>
+                        </div>
+                        <div class="repayment-box" aria-live="polite">
+                            <div class="repayment-header"><span class="repayment-title"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.5v17M16.5 7.5c-.6-1.3-2.1-2-4.4-2-2.5 0-4.1 1.2-4.1 3s1.5 2.7 4.3 3.3c2.9.6 4.3 1.5 4.3 3.4 0 2-1.7 3.4-4.4 3.4-2.5 0-4.3-.9-5-2.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Estimated payoff</span><strong class="repayment-total" id="payoff-total">₹0</strong></div>
+                            <div class="repayment-details"><div class="repayment-detail"><span>Principal</span><strong id="payoff-principal">₹0</strong></div><div class="repayment-detail"><span>Interest</span><strong id="payoff-interest">₹0</strong></div><div class="repayment-detail"><span>Days elapsed</span><strong id="payoff-days">0 days</strong></div><div class="repayment-detail"><span>Rate</span><strong id="payoff-rate">12% p.a.</strong></div></div>
+                            <p class="calculation-note">Estimate only: principal × annual rate × elapsed days ÷ 365. Verify your agreed terms before accepting a repayment.</p>
+                        </div>
+                        <div class="form-error" id="form-error" role="alert"></div>
+                        <button class="primary-button submit-button" type="submit">Save loan record</button>
+                    </form>
+                </article>
+                <p class="privacy-note"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Your records are saved only in this browser on this device. This is not a secure backup.</p>
+            </div>
+
+            <article class="panel ledger-panel">
+                <div class="ledger-heading">
+                    <div><h2>Loan ledger</h2><p>A clear view of every pledge and release.</p></div>
+                    <label class="search-box"><span class="sr-only">Search by customer or loan ID</span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.3" stroke="currentColor" stroke-width="1.6"/><path d="m15.5 15.5 4.2 4.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><input id="search-input" type="search" placeholder="Search name or phone" autocomplete="off"></label>
+                </div>
+                <div class="ledger-controls">
+                    <div class="filter-tabs" role="tablist" aria-label="Filter loans">
+                        <button class="filter-tab active" type="button" role="tab" aria-selected="true" data-filter="all">All</button>
+                        <button class="filter-tab" type="button" role="tab" aria-selected="false" data-filter="active">Active</button>
+                        <button class="filter-tab" type="button" role="tab" aria-selected="false" data-filter="redeemed">Redeemed</button>
+                    </div>
+                    <span class="record-count" id="record-count" aria-live="polite">0 records</span>
+                </div>
+                <div class="table-wrap">
+                    <table class="loan-table">
+                        <thead><tr><th>Customer</th><th>Loan ID</th><th>Amount</th><th>Gold</th><th>Payoff today</th><th>Status</th><th>Action</th></tr></thead>
+                        <tbody id="loan-rows"></tbody>
+                    </table>
+                    <div class="empty-state" id="empty-state">
+                        <span class="empty-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m12 3 8 7-8 11-8-11 8-7Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 10h16" stroke="currentColor" stroke-width="1.2"/></svg></span>
+                        <h3 id="empty-title">Your ledger starts here</h3>
+                        <p id="empty-description">Add your first gold loan and its details will be ready whenever you need them.</p>
+                    </div>
+                </div>
+            </article>
+        </section>
+
+        <section class="panel enquiry-section" aria-labelledby="enquiry-title">
+            <div class="enquiry-heading">
+                <div><h2 id="enquiry-title">Enquiry board</h2><p>Keep prospective customers and next steps in view.</p></div>
+                <span class="enquiry-total" id="enquiry-total">0 enquiries</span>
+            </div>
+            <div class="enquiry-form-wrap">
+                <form class="enquiry-form" id="enquiry-form" novalidate>
+                    <div class="field"><label for="enquiry-name">Customer name</label><input id="enquiry-name" name="name" type="text" placeholder="Full name" maxlength="80" required></div>
+                    <div class="field"><label for="enquiry-phone">Phone number</label><input id="enquiry-phone" name="phone" type="tel" placeholder="Phone number" maxlength="24" required></div>
+                    <div class="field"><label for="enquiry-amount">Expected amount</label><div class="input-wrap"><span class="input-prefix">₹</span><input id="enquiry-amount" name="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Optional"></div></div>
+                    <div class="field"><label for="enquiry-followup">Next follow-up</label><input id="enquiry-followup" name="followUp" type="date"></div>
+                    <div class="field"><label for="enquiry-note">Notes</label><input id="enquiry-note" name="note" type="text" maxlength="240" placeholder="Gold type, questions, next step…"></div>
+                    <button class="primary-button" type="submit">Add enquiry</button>
+                </form>
+                <div class="form-error enquiry-error" id="enquiry-error" role="alert"></div>
+            </div>
+            <div class="enquiry-board" id="enquiry-board" aria-live="polite"></div>
+        </section>
+        <footer class="business-footer" aria-label="Shop address and contact information">
+            <div class="business-footer-address">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="10" r="2.3" stroke="currentColor" stroke-width="1.6"/></svg>
+                <span><span><strong>Visit us</strong> · Gudri, Kali Ji Temple, Bahraich</span><a class="business-map-link" href="https://www.google.com/maps?q=27.574806,81.587333" target="_blank" rel="noopener noreferrer">Open in Google Maps · 27°34′29.3″N 81°35′14.4″E</a></span>
+            </div>
+            <div class="business-footer-phone">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 3.5h3l1.5 4-2 1.5a15 15 0 0 0 5.5 5.5l1.5-2 4 1.5v3c0 1.1-.9 2-2 2C10 20.5 3.5 14 3.5 5.5c0-1.1.9-2 2-2Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span><strong>Call us</strong> · <a href="tel:+919140014240">+91 91400 14240</a></span>
+            </div>
+            <div class="business-footer-whatsapp">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11.7a8 8 0 0 1-11.8 7L4 20l1.4-4A8 8 0 1 1 20 11.7Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 8.5c.2-.4.5-.4.8-.4h.4c.2 0 .3.1.4.4l.6 1.4c.1.2 0 .4-.1.5l-.5.6c-.2.2-.2.3 0 .6.5.8 1.1 1.4 1.9 1.8.3.2.4.2.6 0l.6-.7c.2-.2.3-.2.5-.1l1.4.7c.2.1.3.2.3.4 0 .3-.2.9-.6 1.2-.4.4-1 .6-1.5.5-1-.2-2.2-.8-3.3-1.8-1-.9-1.7-2-1.9-3-.1-.8.1-1.5.4-2.1Z" fill="currentColor"/></svg>
+                <a class="business-whatsapp-link" href="https://wa.me/919140014240" target="_blank" rel="noopener noreferrer">WhatsApp us</a>
+            </div>
+        </footer>
+    </main>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="dev.js"></script>
+</body>
+</html>
